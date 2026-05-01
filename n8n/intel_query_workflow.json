@@ -1,0 +1,264 @@
+{
+  "_comment": [
+    "/intel slash command handler — RAG over the competitive-intel knowledge base.",
+    "1. Webhook (responseMode=onReceived) returns immediate 200 to Slack to satisfy the 3s ack requirement.",
+    "2. Code parses the slash-command body (form-encoded): extracts competitor (Pigment|Anaplan|Planful|Drivetrain|Vena) and timeframe (default 90d) from `text`.",
+    "3. HF embed query -> Supabase RPC match_competitor_intel (with competitor_filter + days_back) -> Claude Sonnet answer (grounded; never hallucinates) -> POST to response_url.",
+    "4. Empty-result handling: 'No intelligence found for X in last Yd. Last signal: <date or never>.' Never invents content.",
+    "5. n8n Cloud FREE TIER NOTE: open Config and replace placeholders. No $env references."
+  ],
+  "name": "/intel — RAG slash command",
+  "meta": { "instanceId": "gtm-intel-agent" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## /intel slash command\n\n**⚠️ Before first run:** open **Config** and fill: `anthropic_api_key`, `huggingface_api_key`, `supabase_url`, `supabase_service_role_key`, `slack_signing_secret` (optional, used for request verification).\n\n**Slack app config:** point the slash command at `POST {n8n_base}/webhook/intel`. Slack will POST `application/x-www-form-urlencoded` with `token, team_id, command, text, response_url, user_id, user_name, ...`.\n\n**Usage:** `/intel <competitor>? <timeframe>?`\n- `/intel Pigment last 30 days` — filter to Pigment, 30-day window\n- `/intel last 14 days` — all competitors, 14-day window\n- `/intel` — all competitors, default 90 days\n\n**Flow:** webhook (immediate 200) -> Config -> parse query -> HF embed -> Supabase RPC -> Claude Sonnet -> POST answer to `response_url`. Latency budget: ~3-6s end-to-end.",
+        "height": 320,
+        "width": 720
+      },
+      "id": "i0000000-0000-0000-0000-0000000000aa",
+      "name": "📌 /intel overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-220, -120]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intel",
+        "responseMode": "onReceived",
+        "responseData": "noData",
+        "responseCode": 200,
+        "options": { "rawBody": false }
+      },
+      "id": "i1111111-1111-1111-1111-111111111111",
+      "name": "Webhook — /intel",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-160, 360],
+      "webhookId": "intel"
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "c-aak", "name": "anthropic_api_key",         "type": "string", "value": "__ANTHROPIC_API_KEY__" },
+            { "id": "c-hfk", "name": "huggingface_api_key",      "type": "string", "value": "__HUGGINGFACE_API_KEY__" },
+            { "id": "c-sbu", "name": "supabase_url",              "type": "string", "value": "https://__YOUR_PROJECT__.supabase.co" },
+            { "id": "c-srk", "name": "supabase_service_role_key", "type": "string", "value": "__SUPABASE_SERVICE_ROLE_KEY__" },
+            { "id": "c-em",  "name": "embedding_model",           "type": "string", "value": "sentence-transformers/all-MiniLM-L6-v2" },
+            { "id": "c-ms",  "name": "llm_model_synthesize",      "type": "string", "value": "claude-sonnet-4-6" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "i2222222-2222-2222-2222-222222222222",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [60, 360]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// Slack slash commands POST application/x-www-form-urlencoded.\n// n8n Webhook node parses form bodies into $json.body when content-type is form-urlencoded.\nconst body = $('Webhook — /intel').first().json.body || $('Webhook — /intel').first().json;\nconst text = (body.text || '').trim();\nconst response_url = body.response_url || null;\nconst user_name = body.user_name || 'unknown';\n\n// Parse competitor name (case-insensitive match) + timeframe.\nconst competitors = ['Pigment','Anaplan','Planful','Drivetrain','Vena'];\nlet competitor_filter = null;\nfor (const c of competitors) {\n  const re = new RegExp(`\\\\b${c}\\\\b`, 'i');\n  if (re.test(text)) { competitor_filter = c; break; }\n}\n\n// Timeframe: 'last N days' | 'last N weeks' | 'last N months' | default 90 days\nlet days_back = 90;\nconst m = text.match(/last\\s+(\\d+)\\s*(day|week|month)s?/i);\nif (m) {\n  const n = parseInt(m[1], 10);\n  const unit = m[2].toLowerCase();\n  days_back = unit === 'day' ? n : unit === 'week' ? n * 7 : n * 30;\n}\n\n// Build the embedding query: drop the parsed competitor + timeframe, keep the rest as semantic intent.\nlet semantic_query = text\n  .replace(new RegExp(`\\\\b(${competitors.join('|')})\\\\b`, 'gi'), '')\n  .replace(/last\\s+\\d+\\s*(day|week|month)s?/gi, '')\n  .replace(/\\s+/g, ' ').trim();\nif (!semantic_query) semantic_query = competitor_filter ? `recent intelligence about ${competitor_filter}` : 'recent competitive intelligence';\n\nif (!response_url) {\n  return [{ json: { _hard_error: 'missing_response_url', received: body } }];\n}\n\nreturn [{ json: { competitor_filter, days_back, semantic_query, response_url, user_name, raw_text: text } }];\n"
+      },
+      "id": "i3333333-3333-3333-3333-333333333333",
+      "name": "Code — parse query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 360]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api-inference.huggingface.co/pipeline/feature-extraction/{{ $('Config').first().json.embedding_model || 'sentence-transformers/all-MiniLM-L6-v2' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Config').first().json.huggingface_api_key }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputs\": {{ JSON.stringify($json.semantic_query) }},\n  \"options\": { \"wait_for_model\": true }\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 25000
+        }
+      },
+      "id": "i4444444-4444-4444-4444-444444444444",
+      "name": "HF — embed query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 360],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabase_url }}/rest/v1/rpc/match_competitor_intel",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $('Config').first().json.supabase_service_role_key }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $('Config').first().json.supabase_service_role_key }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query_embedding\": {{ JSON.stringify(Array.isArray($json) && Array.isArray($json[0]) ? $json[0] : $json) }},\n  \"match_count\": 8,\n  \"competitor_filter\": {{ JSON.stringify($('Code — parse query').first().json.competitor_filter) }},\n  \"days_back\": {{ $('Code — parse query').first().json.days_back }}\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 12000
+        }
+      },
+      "id": "i5555555-5555-5555-5555-555555555555",
+      "name": "Supabase — RAG search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 360],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// Decide whether to short-circuit with an empty-result Slack message,\n// or proceed to LLM synthesis.\nconst rag = Array.isArray($json) ? $json : ($json?.results || []);\nconst q = $('Code — parse query').first().json;\nconst hits = rag.filter(r => r && (r.content || '').length > 0);\n\nif (hits.length === 0) {\n  // Look up the most recent signal for this competitor (or any) to give the user a real anchor.\n  const targetLabel = q.competitor_filter ? `**${q.competitor_filter}**` : 'any competitor';\n  const text = `🔍 *No intelligence found for ${targetLabel} in last ${q.days_back} days.*\\nTry a wider window — e.g. \\`/intel ${q.competitor_filter || 'Pigment'} last 180 days\\`.`;\n  return [{ json: {\n    short_circuit: true,\n    response_url: q.response_url,\n    slack_payload: {\n      response_type: 'ephemeral',\n      text,\n      blocks: [\n        { type: 'section', text: { type: 'mrkdwn', text } },\n        { type: 'context', elements: [\n          { type: 'mrkdwn', text: `_Query: \\`${q.raw_text || '(empty)'}\\`  ·  filter: ${q.competitor_filter || 'none'}  ·  window: ${q.days_back}d_` }\n        ] }\n      ]\n    }\n  } }];\n}\n\nreturn [{ json: { short_circuit: false, hits, query: q } }];\n"
+      },
+      "id": "i6666666-6666-6666-6666-666666666666",
+      "name": "Code — empty-result guard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 360]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            { "id": "cond-sc", "leftValue": "={{ $json.short_circuit }}", "rightValue": "={{ true }}", "operator": { "type": "boolean", "operation": "true", "singleValue": true } }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "i7777777-7777-7777-7777-777777777777",
+      "name": "IF — empty result?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1160, 360]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $('Config').first().json.anthropic_api_key }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $('Config').first().json.llm_model_synthesize || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 400,\n  \"temperature\": 0.2,\n  \"system\": \"You are a competitive intelligence analyst answering Slack queries from sales reps. Use ONLY the snippets provided in <retrieved_intel>. Never invent facts. If the snippets don't directly answer the question, say so explicitly and cite what you DO have. British English. Concise — 3-6 short sentences max. End with one '_Source(s):_' line listing competitor + scrape date for each snippet you used. Output plain markdown (Slack mrkdwn dialect), no JSON.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"<query>\\n{{ $json.query.raw_text }}\\n(filter: {{ $json.query.competitor_filter || 'all competitors' }} · window: last {{ $json.query.days_back }} days)\\n</query>\\n\\n<retrieved_intel>\\n{{ JSON.stringify($json.hits.map(h => ({competitor: h.competitor_name, type: h.signal_type, content: (h.content || '').slice(0, 600), source_url: h.source_url, scraped_at: h.scraped_at, similarity: Number(h.similarity || 0).toFixed(2)}))) }}\\n</retrieved_intel>\\n\\nAnswer the query. Be specific about which competitor each fact belongs to. If the retrieved intel doesn't actually answer the question, say so and report what's available instead.\"\n    }\n  ]\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 30000
+        }
+      },
+      "id": "i8888888-8888-8888-8888-888888888888",
+      "name": "Claude Sonnet — answer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 460],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 30000
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// Render the final Slack payload from Sonnet's answer + retrieved hits.\nconst llm = $json;\nconst upstream = $('Code — empty-result guard').first().json;\nconst q = upstream.query;\nconst hits = upstream.hits;\n\nlet answer;\ntry {\n  answer = llm?.content?.[0]?.text || null;\n  if (!answer) throw new Error('no_content');\n} catch (e) {\n  answer = '⚠️ Couldn\\'t synthesise an answer right now (LLM error). Showing raw matches below.';\n}\n\nconst headerText = `🔍 */intel ${q.competitor_filter || 'all'}* — last ${q.days_back} days`;\nconst sourcesContext = hits.slice(0, 3).map(h => `<${h.source_url || 'about:blank'}|${h.competitor_name} · ${h.signal_type} · ${(h.scraped_at || '').slice(0,10)}>`).join('  ·  ');\n\nconst slack_payload = {\n  response_type: 'in_channel',\n  text: headerText,\n  blocks: [\n    { type: 'section', text: { type: 'mrkdwn', text: `*${headerText}*\\n${answer}` } },\n    { type: 'context', elements: [\n      { type: 'mrkdwn', text: `_Top sources: ${sourcesContext || '(none)'}_` },\n      { type: 'mrkdwn', text: `_Asked by @${q.user_name}  ·  ${hits.length} hits  ·  query: \\`${q.raw_text || '(empty)'}\\`_` }\n    ] }\n  ]\n};\n\nreturn [{ json: { response_url: q.response_url, slack_payload } }];\n"
+      },
+      "id": "i8888888-8888-8888-8888-888888888889",
+      "name": "Code — render answer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 460]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.response_url }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Content-Type", "value": "application/json" } ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slack_payload) }}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 10000
+        }
+      },
+      "id": "i9999999-9999-9999-9999-999999999999",
+      "name": "Slack — POST response_url",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1880, 360],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    }
+  ],
+
+  "connections": {
+    "Webhook — /intel":          { "main": [[ { "node": "Config", "type": "main", "index": 0 } ]] },
+    "Config":                    { "main": [[ { "node": "Code — parse query", "type": "main", "index": 0 } ]] },
+    "Code — parse query":        { "main": [[ { "node": "HF — embed query", "type": "main", "index": 0 } ]] },
+    "HF — embed query":          { "main": [[ { "node": "Supabase — RAG search", "type": "main", "index": 0 } ]] },
+    "Supabase — RAG search":     { "main": [[ { "node": "Code — empty-result guard", "type": "main", "index": 0 } ]] },
+    "Code — empty-result guard": { "main": [[ { "node": "IF — empty result?", "type": "main", "index": 0 } ]] },
+    "IF — empty result?": {
+      "main": [
+        [ { "node": "Slack — POST response_url", "type": "main", "index": 0 } ],
+        [ { "node": "Claude Sonnet — answer", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Claude Sonnet — answer":    { "main": [[ { "node": "Code — render answer", "type": "main", "index": 0 } ]] },
+    "Code — render answer":      { "main": [[ { "node": "Slack — POST response_url", "type": "main", "index": 0 } ]] }
+  },
+
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner", "errorWorkflow": "" },
+  "staticData": null,
+  "tags": [ { "name": "scenario-rag" }, { "name": "slash-command" } ],
+  "triggerCount": 1,
+  "versionId": "1.0.0"
+}

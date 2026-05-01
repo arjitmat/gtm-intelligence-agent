@@ -1,0 +1,208 @@
+{
+  "_meta": {
+    "purpose": "Slack Block Kit fragments for the Scenario B deal-enrichment notification posted to #deals when an Airtable deal hits 'Qualified'. The workflow's 'Render deal Block Kit' Code node assembles a final blocks[] array from these fragments, substituting placeholders ({{...}}) with values from the parsed Sonnet enrichment JSON.",
+    "version": "1.0",
+    "last_updated": "2026-05-01",
+    "related_prompt": "prompts/deal_enrichment.md",
+    "related_workflow": "n8n/scenario_b_workflow.json",
+    "playground_url": "https://app.slack.com/block-kit-builder",
+    "placeholder_syntax": "Mustache-style {{variable}}; replaced verbatim by the Code node. Conditional fragments are wrapped in render_rules.conditional_blocks below."
+  },
+
+  "fragments": {
+    "header": [
+      {
+        "type": "header",
+        "text": { "type": "plain_text", "text": "📊 Deal Intelligence Ready — {{company_name}}", "emoji": true }
+      },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "Qualified by: *{{ae_owner}}*  ·  Deal: *{{deal_value_formatted}}*  ·  {{deal_id_or_record_id}}" }
+        ]
+      },
+      { "type": "divider" }
+    ],
+
+    "company_facts_section": [
+      {
+        "type": "section",
+        "fields": [
+          { "type": "mrkdwn", "text": "*Company:*\n{{company_name}}" },
+          { "type": "mrkdwn", "text": "*Employees:*\n{{headcount_or_dash}}" },
+          { "type": "mrkdwn", "text": "*Stage:*\n{{funding_stage_or_dash}}" },
+          { "type": "mrkdwn", "text": "*Revenue:*\n{{estimated_revenue_or_dash}}" },
+          { "type": "mrkdwn", "text": "*Industry:*\n{{industry_or_dash}}" },
+          { "type": "mrkdwn", "text": "*HQ:*\n{{hq_or_dash}}" }
+        ]
+      },
+      { "type": "divider" }
+    ],
+
+    "icp_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🎯 ICP Score: {{icp_score}}/100  {{band_emoji}} {{icp_band}}*\n*Current FP&A:* {{current_fpa_stack_or_unknown}}\n*Decision maker:* {{primary_decision_maker_or_to_investigate}}" }
+      }
+    ],
+
+    "why_buy_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*Why they might buy:*\n{{why_they_might_buy}}" }
+      }
+    ],
+
+    "competitive_warning_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "🔴 *Watch:* {{competitive_signals_summary}}" }
+      }
+    ],
+
+    "ae_action_items_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🎯 AE next steps*\n{{action_bullets_md}}" }
+      }
+    ],
+
+    "actions_buttons": [
+      {
+        "type": "actions",
+        "block_id": "deal_{{deal_id_or_record_id}}",
+        "elements": [
+          {
+            "type": "button",
+            "style": "primary",
+            "text": { "type": "plain_text", "text": "Open in Airtable" },
+            "url": "{{airtable_record_url}}",
+            "action_id": "open_airtable"
+          },
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "View battlecard ({{battlecard_competitor}})" },
+            "value": "battlecard::{{battlecard_competitor}}",
+            "action_id": "view_battlecard"
+          },
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "Mark contacted" },
+            "value": "contacted::{{record_id}}",
+            "action_id": "mark_contacted"
+          }
+        ]
+      }
+    ],
+
+    "footer": [
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "Data confidence: *{{data_confidence}}%* {{confidence_emoji}}  ·  Enrichment: *{{enrichment_status}}*  {{partial_warning}}" }
+        ]
+      }
+    ]
+  },
+
+  "render_rules": {
+    "band_emoji": { "Green": "🟢", "Amber": "🟡", "Red": "🔴" },
+    "confidence_emoji_thresholds": { ">=80": "✅", ">=50": "⚠️", "<50": "🟥" },
+    "deal_value_formatted": "If deal_value_eur is set: `€{deal_value_eur.toLocaleString('en-GB')}/yr`; else `unspecified`.",
+    "primary_decision_maker": "If key_decision_makers[0]: `{title} — {name}`; else `_to investigate_`.",
+    "battlecard_competitor": "First competitor name found in competitive_signals_summary text (Pigment|Anaplan|Planful|Drivetrain|Vena); fallback `Pigment`.",
+    "airtable_record_url": "`https://airtable.com/{airtable_base_id}/{encoded_table_name}/{record_id}`.",
+    "partial_warning": "If data_confidence < 40: `⚠️ Partial — please add company website to CRM.`; else empty string.",
+    "conditional_blocks": [
+      { "fragment": "why_buy_section",          "render_when": "enrichment.why_they_might_buy is non-null and non-empty" },
+      { "fragment": "competitive_warning_section", "render_when": "enrichment.competitive_signals_summary is non-null and non-empty" },
+      { "fragment": "ae_action_items_section",   "render_when": "enrichment.ae_action_items length > 0" }
+    ],
+    "action_bullets_md": "Each ae_action_item rendered as `• {item}` joined with `\\n`."
+  },
+
+  "complete_example": {
+    "_note": "What a fully-rendered Green-ICP deal card looks like for DEAL-0001 (Hexalogic People). Paste into Block Kit Builder to preview.",
+    "blocks": [
+      {
+        "type": "header",
+        "text": { "type": "plain_text", "text": "📊 Deal Intelligence Ready — Hexalogic People", "emoji": true }
+      },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "Qualified by: *Elena Martínez*  ·  Deal: *€42,000/yr*  ·  DEAL-0001" }
+        ]
+      },
+      { "type": "divider" },
+      {
+        "type": "section",
+        "fields": [
+          { "type": "mrkdwn", "text": "*Company:*\nHexalogic People" },
+          { "type": "mrkdwn", "text": "*Employees:*\n280" },
+          { "type": "mrkdwn", "text": "*Stage:*\nSeries B" },
+          { "type": "mrkdwn", "text": "*Revenue:*\n~€15M ARR" },
+          { "type": "mrkdwn", "text": "*Industry:*\nHR SaaS" },
+          { "type": "mrkdwn", "text": "*HQ:*\nBarcelona, Spain" }
+        ]
+      },
+      { "type": "divider" },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🎯 ICP Score: 90/100  🟢 Green*\n*Current FP&A:* Google Sheets + Excel (CRM-confirmed)\n*Decision maker:* CFO — Marc Puig" }
+      },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*Why they might buy:*\nSeries B with finance team scaling. CFO Marc Puig flagged 8+ day monthly close and manual board pack — classic mid-market FP&A pain point we routinely solve in <4 weeks." }
+      },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "🔴 *Watch:* Pigment launched a Starter tier (€299/mo) on 29 Apr — likely target this account. Pre-empt with our published pricing." }
+      },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🎯 AE next steps*\n• Open the call on the 8-day close cycle — they self-reported it on inbound.\n• Reference Pigment's new Starter tier proactively before they get pitched.\n• Map a 4-week implementation plan — Insight portfolio CFOs prioritise speed." }
+      },
+      {
+        "type": "actions",
+        "block_id": "deal_recHEXALOGIC1234",
+        "elements": [
+          { "type": "button", "style": "primary", "text": { "type": "plain_text", "text": "Open in Airtable" }, "url": "https://airtable.com/appXXX/Deals/recHEXALOGIC1234", "action_id": "open_airtable" },
+          { "type": "button", "text": { "type": "plain_text", "text": "View battlecard (Pigment)" }, "value": "battlecard::Pigment", "action_id": "view_battlecard" },
+          { "type": "button", "text": { "type": "plain_text", "text": "Mark contacted" }, "value": "contacted::recHEXALOGIC1234", "action_id": "mark_contacted" }
+        ]
+      },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "Data confidence: *91%* ✅  ·  Enrichment: *complete*  " }
+        ]
+      }
+    ]
+  },
+
+  "partial_example": {
+    "_note": "Amber/partial-data deal card (DEAL-0009 Stratacore Capital — missing website). Shows the `Partial` warning footer.",
+    "blocks": [
+      { "type": "header", "text": { "type": "plain_text", "text": "📊 Deal Intelligence Ready — Stratacore Capital", "emoji": true } },
+      { "type": "context", "elements": [ { "type": "mrkdwn", "text": "Qualified by: *Marc Puig*  ·  Deal: *€45,000/yr*  ·  DEAL-0009" } ] },
+      { "type": "divider" },
+      { "type": "section", "fields": [
+        { "type": "mrkdwn", "text": "*Company:*\nStratacore Capital" },
+        { "type": "mrkdwn", "text": "*Employees:*\n90" },
+        { "type": "mrkdwn", "text": "*Stage:*\nSeries A" },
+        { "type": "mrkdwn", "text": "*Revenue:*\n—" },
+        { "type": "mrkdwn", "text": "*Industry:*\nAsset Management" },
+        { "type": "mrkdwn", "text": "*HQ:*\n—" }
+      ] },
+      { "type": "divider" },
+      { "type": "section", "text": { "type": "mrkdwn", "text": "*🎯 ICP Score: 60/100  🟡 Amber*\n*Current FP&A:* _unknown_\n*Decision maker:* _to investigate_" } },
+      { "type": "section", "text": { "type": "mrkdwn", "text": "*🎯 AE next steps*\n• Manual review — no website on record. Ask sales rep to backfill before next outreach.\n• Light qualification call to confirm finance team size and current tooling." } },
+      { "type": "actions", "block_id": "deal_recSTRATACORE", "elements": [
+        { "type": "button", "style": "primary", "text": { "type": "plain_text", "text": "Open in Airtable" }, "url": "https://airtable.com/appXXX/Deals/recSTRATACORE", "action_id": "open_airtable" },
+        { "type": "button", "text": { "type": "plain_text", "text": "View battlecard (Pigment)" }, "value": "battlecard::Pigment", "action_id": "view_battlecard" }
+      ] },
+      { "type": "context", "elements": [ { "type": "mrkdwn", "text": "Data confidence: *35%* 🟥  ·  Enrichment: *partial*  ⚠️ Partial — please add company website to CRM." } ] }
+    ]
+  }
+}
