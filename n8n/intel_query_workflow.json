@@ -49,7 +49,10 @@
             { "id": "c-sbu", "name": "supabase_url",              "type": "string", "value": "https://__YOUR_PROJECT__.supabase.co" },
             { "id": "c-srk", "name": "supabase_service_role_key", "type": "string", "value": "__SUPABASE_SERVICE_ROLE_KEY__" },
             { "id": "c-em",  "name": "embedding_model",           "type": "string", "value": "sentence-transformers/all-MiniLM-L6-v2" },
-            { "id": "c-ms",  "name": "llm_model_synthesize",      "type": "string", "value": "claude-sonnet-4-6" }
+            { "id": "c-ms",  "name": "llm_model_synthesize",      "type": "string", "value": "claude-sonnet-4-6" },
+            { "id": "c-lpk", "name": "langfuse_public_key",       "type": "string", "value": "__LANGFUSE_PUBLIC_KEY__" },
+            { "id": "c-lsk", "name": "langfuse_secret_key",       "type": "string", "value": "__LANGFUSE_SECRET_KEY__" },
+            { "id": "c-lh",  "name": "langfuse_host",             "type": "string", "value": "https://cloud.langfuse.com" }
           ]
         },
         "options": {}
@@ -235,6 +238,36 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.langfuse_host }}/api/public/traces",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Basic {{ Buffer.from($('Config').first().json.langfuse_public_key + ':' + $('Config').first().json.langfuse_secret_key).toString('base64') }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"intel_query\",\n  \"input\": {{ ($('Claude Sonnet — answer').first().json.usage && $('Claude Sonnet — answer').first().json.usage.input_tokens) || 0 }},\n  \"output\": {{ ($('Claude Sonnet — answer').first().json.usage && $('Claude Sonnet — answer').first().json.usage.output_tokens) || 0 }},\n  \"metadata\": {\n    \"model\": {{ JSON.stringify($('Claude Sonnet — answer').first().json.model || $('Config').first().json.llm_model_synthesize) }},\n    \"run_id\": {{ JSON.stringify('intel_' + ($('Code — parse query').first().json.user_name || 'anon')) }},\n    \"competitor\": {{ JSON.stringify($('Code — parse query').first().json.competitor_filter) }},\n    \"days_back\": {{ $('Code — parse query').first().json.days_back }},\n    \"hits\": {{ ($('Code — empty-result guard').first().json.hits || []).length }},\n    \"cost_estimate\": {{ ((($('Claude Sonnet — answer').first().json.usage || {}).input_tokens || 0) * 0.000003) + ((($('Claude Sonnet — answer').first().json.usage || {}).output_tokens || 0) * 0.000015) }}\n  }\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 8000
+        }
+      },
+      "id": "lfi00001-0000-0000-0000-00000000000c",
+      "name": "Langfuse — log intel query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1640, 640],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     }
   ],
 
@@ -251,7 +284,7 @@
         [ { "node": "Claude Sonnet — answer", "type": "main", "index": 0 } ]
       ]
     },
-    "Claude Sonnet — answer":    { "main": [[ { "node": "Code — render answer", "type": "main", "index": 0 } ]] },
+    "Claude Sonnet — answer":    { "main": [[ { "node": "Code — render answer", "type": "main", "index": 0 }, { "node": "Langfuse — log intel query", "type": "main", "index": 0 } ]] },
     "Code — render answer":      { "main": [[ { "node": "Slack — POST response_url", "type": "main", "index": 0 } ]] }
   },
 

@@ -387,6 +387,36 @@
       "alwaysOutputData": true,
       "onError": "continueRegularOutput",
       "retryOnFail": false
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.langfuse_host }}/api/public/traces",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Basic {{ Buffer.from($('Config').first().json.langfuse_public_key + ':' + $('Config').first().json.langfuse_secret_key).toString('base64') }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"scenario_b_enrichment\",\n  \"input\": {{ ($('Claude Sonnet — enrichment').first().json.usage && $('Claude Sonnet — enrichment').first().json.usage.input_tokens) || 0 }},\n  \"output\": {{ ($('Claude Sonnet — enrichment').first().json.usage && $('Claude Sonnet — enrichment').first().json.usage.output_tokens) || 0 }},\n  \"metadata\": {\n    \"model\": {{ JSON.stringify($('Claude Sonnet — enrichment').first().json.model || $('Config').first().json.llm_model_enrichment) }},\n    \"run_id\": {{ JSON.stringify($('Code — validate + normalise').first().json.deal_id || $('Code — validate + normalise').first().json.record_id) }},\n    \"deal_id\": {{ JSON.stringify($('Code — validate + normalise').first().json.deal_id) }},\n    \"company_name\": {{ JSON.stringify($('Code — validate + normalise').first().json.company_name) }},\n    \"icp_band\": {{ JSON.stringify($('Code — ICP score + merge').first().json.icp.band) }},\n    \"cost_estimate\": {{ ((($('Claude Sonnet — enrichment').first().json.usage || {}).input_tokens || 0) * 0.000003) + ((($('Claude Sonnet — enrichment').first().json.usage || {}).output_tokens || 0) * 0.000015) }}\n  }\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 8000
+        }
+      },
+      "id": "lfb00001-0000-0000-0000-00000000000b",
+      "name": "Langfuse — log enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1880, 540],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     }
   ],
 
@@ -407,7 +437,7 @@
     "Supabase — RAG search":       { "main": [[ { "node": "Merge — enrichment sources", "type": "main", "index": 2 } ]] },
     "Merge — enrichment sources":  { "main": [[ { "node": "Code — ICP score + merge", "type": "main", "index": 0 } ]] },
     "Code — ICP score + merge":    { "main": [[ { "node": "Claude Sonnet — enrichment", "type": "main", "index": 0 } ]] },
-    "Claude Sonnet — enrichment":  { "main": [[ { "node": "Code — parse + validate", "type": "main", "index": 0 } ]] },
+    "Claude Sonnet — enrichment":  { "main": [[ { "node": "Code — parse + validate", "type": "main", "index": 0 }, { "node": "Langfuse — log enrichment", "type": "main", "index": 0 } ]] },
     "Code — parse + validate":     { "main": [[ { "node": "Airtable — write enrichment back", "type": "main", "index": 0 } ]] },
     "Airtable — write enrichment back": { "main": [[ { "node": "Code — render deal Block Kit", "type": "main", "index": 0 } ]] },
     "Code — render deal Block Kit": { "main": [[ { "node": "Slack — post deal card", "type": "main", "index": 0 } ]] },

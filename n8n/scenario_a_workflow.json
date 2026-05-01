@@ -61,7 +61,10 @@
             { "id": "c-srk", "name": "supabase_service_role_key",      "type": "string", "value": "__SUPABASE_SERVICE_ROLE_KEY__" },
             { "id": "c-swc", "name": "slack_webhook_competitive_intel","type": "string", "value": "__SLACK_WEBHOOK_COMPETITIVE_INTEL__" },
             { "id": "c-mc",  "name": "llm_model_classify",             "type": "string", "value": "claude-haiku-4-5-20251001" },
-            { "id": "c-ms",  "name": "llm_model_synthesize",           "type": "string", "value": "claude-sonnet-4-6" }
+            { "id": "c-ms",  "name": "llm_model_synthesize",           "type": "string", "value": "claude-sonnet-4-6" },
+            { "id": "c-lpk", "name": "langfuse_public_key",            "type": "string", "value": "__LANGFUSE_PUBLIC_KEY__" },
+            { "id": "c-lsk", "name": "langfuse_secret_key",            "type": "string", "value": "__LANGFUSE_SECRET_KEY__" },
+            { "id": "c-lh",  "name": "langfuse_host",                  "type": "string", "value": "https://cloud.langfuse.com" }
           ]
         },
         "options": {}
@@ -81,7 +84,7 @@
               "id": "asgn-competitors",
               "name": "competitors",
               "type": "array",
-              "value": "={{ [\n  { \"name\": \"Pigment\",    \"slug\": \"pigment\",    \"blog_url\": \"https://www.pigment.com/blog\",          \"pricing_url\": \"https://www.pigment.com/pricing\" },\n  { \"name\": \"Anaplan\",    \"slug\": \"anaplan\",    \"blog_url\": \"https://www.anaplan.com/blog/\",         \"pricing_url\": \"https://www.anaplan.com/pricing/\" },\n  { \"name\": \"Planful\",    \"slug\": \"planful\",    \"blog_url\": \"https://planful.com/resources/blog/\",   \"pricing_url\": \"https://planful.com/pricing/\" },\n  { \"name\": \"Drivetrain\", \"slug\": \"drivetrain\", \"blog_url\": \"https://drivetrain.ai/blog/\",            \"pricing_url\": \"https://drivetrain.ai/pricing\" },\n  { \"name\": \"Vena\",       \"slug\": \"vena\",       \"blog_url\": \"https://www.venasolutions.com/blog\",     \"pricing_url\": \"https://www.venasolutions.com/pricing\" }\n] }}"
+              "value": "={{ ($json.body && Array.isArray($json.body.competitors_override) && $json.body.competitors_override.length > 0) ? $json.body.competitors_override : [\n  { \"name\": \"Pigment\",    \"slug\": \"pigment\",    \"blog_url\": \"https://www.pigment.com/blog\",          \"pricing_url\": \"https://www.pigment.com/pricing\" },\n  { \"name\": \"Anaplan\",    \"slug\": \"anaplan\",    \"blog_url\": \"https://www.anaplan.com/blog/\",         \"pricing_url\": \"https://www.anaplan.com/pricing/\" },\n  { \"name\": \"Planful\",    \"slug\": \"planful\",    \"blog_url\": \"https://planful.com/resources/blog/\",   \"pricing_url\": \"https://planful.com/pricing/\" },\n  { \"name\": \"Drivetrain\", \"slug\": \"drivetrain\", \"blog_url\": \"https://drivetrain.ai/blog/\",            \"pricing_url\": \"https://drivetrain.ai/pricing\" },\n  { \"name\": \"Vena\",       \"slug\": \"vena\",       \"blog_url\": \"https://www.venasolutions.com/blog\",     \"pricing_url\": \"https://www.venasolutions.com/pricing\" }\n] }}"
             },
             { "id": "asgn-run-id",       "name": "run_id",       "type": "string", "value": "=run_{{ $now.toFormat('yyyy_LL_dd_HHmmss') }}" },
             { "id": "asgn-week-of",      "name": "week_of",      "type": "string", "value": "={{ $now.startOf('week').toFormat('yyyy-LL-dd') }}" },
@@ -489,6 +492,66 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.langfuse_host }}/api/public/traces",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Basic {{ Buffer.from($('Config').first().json.langfuse_public_key + ':' + $('Config').first().json.langfuse_secret_key).toString('base64') }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"scenario_a_classify\",\n  \"input\": {{ ($('Claude Haiku — classify').first().json.usage && $('Claude Haiku — classify').first().json.usage.input_tokens) || 0 }},\n  \"output\": {{ ($('Claude Haiku — classify').first().json.usage && $('Claude Haiku — classify').first().json.usage.output_tokens) || 0 }},\n  \"metadata\": {\n    \"model\": {{ JSON.stringify($('Claude Haiku — classify').first().json.model || $('Config').first().json.llm_model_classify) }},\n    \"run_id\": {{ JSON.stringify($('Set — Run config').first().json.run_id) }},\n    \"competitor\": {{ JSON.stringify($json.competitor_name) }},\n    \"priority_tier\": {{ JSON.stringify($json.priority_tier) }},\n    \"cost_estimate\": {{ ((($('Claude Haiku — classify').first().json.usage || {}).input_tokens || 0) * 0.0000008) + ((($('Claude Haiku — classify').first().json.usage || {}).output_tokens || 0) * 0.000004) }}\n  }\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 8000
+        }
+      },
+      "id": "lf000001-0000-0000-0000-000000000001",
+      "name": "Langfuse — log classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2020, 240],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.langfuse_host }}/api/public/traces",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Basic {{ Buffer.from($('Config').first().json.langfuse_public_key + ':' + $('Config').first().json.langfuse_secret_key).toString('base64') }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"scenario_a_synthesise\",\n  \"input\": {{ ($('Claude Sonnet — digest synth').first().json.usage && $('Claude Sonnet — digest synth').first().json.usage.input_tokens) || 0 }},\n  \"output\": {{ ($('Claude Sonnet — digest synth').first().json.usage && $('Claude Sonnet — digest synth').first().json.usage.output_tokens) || 0 }},\n  \"metadata\": {\n    \"model\": {{ JSON.stringify($('Claude Sonnet — digest synth').first().json.model || $('Config').first().json.llm_model_synthesize) }},\n    \"run_id\": {{ JSON.stringify($('Set — Run config').first().json.run_id) }},\n    \"competitor\": null,\n    \"cost_estimate\": {{ ((($('Claude Sonnet — digest synth').first().json.usage || {}).input_tokens || 0) * 0.000003) + ((($('Claude Sonnet — digest synth').first().json.usage || {}).output_tokens || 0) * 0.000015) }}\n  }\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
+          "timeout": 8000
+        }
+      },
+      "id": "lf000002-0000-0000-0000-000000000002",
+      "name": "Langfuse — log synthesise",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1420, 1000],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     }
   ],
 
@@ -510,7 +573,7 @@
     "Merge — sources":       { "main": [[ { "node": "Code — clean + truncate", "type": "main", "index": 0 } ]] },
     "Code — clean + truncate": { "main": [[ { "node": "Claude Haiku — classify", "type": "main", "index": 0 } ]] },
     "Claude Haiku — classify": { "main": [[ { "node": "Code — parse + validate", "type": "main", "index": 0 } ]] },
-    "Code — parse + validate": { "main": [[ { "node": "IF — priority HIGH?", "type": "main", "index": 0 } ]] },
+    "Code — parse + validate": { "main": [[ { "node": "IF — priority HIGH?", "type": "main", "index": 0 }, { "node": "Langfuse — log classify", "type": "main", "index": 0 } ]] },
     "IF — priority HIGH?": {
       "main": [
         [ { "node": "Slack — HIGH approval card", "type": "main", "index": 0 } ],
@@ -521,7 +584,7 @@
     "Supabase — insert signal":   { "main": [[ { "node": "Loop over competitors", "type": "main", "index": 0 } ]] },
     "Aggregate — all competitors": { "main": [[ { "node": "Code — build digest input", "type": "main", "index": 0 } ]] },
     "Code — build digest input": { "main": [[ { "node": "Claude Sonnet — digest synth", "type": "main", "index": 0 } ]] },
-    "Claude Sonnet — digest synth": { "main": [[ { "node": "Code — render Block Kit", "type": "main", "index": 0 } ]] },
+    "Claude Sonnet — digest synth": { "main": [[ { "node": "Code — render Block Kit", "type": "main", "index": 0 }, { "node": "Langfuse — log synthesise", "type": "main", "index": 0 } ]] },
     "Code — render Block Kit": { "main": [[ { "node": "Slack — post digest", "type": "main", "index": 0 } ]] },
     "Slack — post digest": { "main": [[ { "node": "Supabase — store digest", "type": "main", "index": 0 } ]] }
   },
