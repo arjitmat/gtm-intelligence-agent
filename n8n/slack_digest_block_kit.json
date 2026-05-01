@@ -1,0 +1,239 @@
+{
+  "_meta": {
+    "purpose": "Slack Block Kit template fragments for the weekly competitive-intel digest. The Scenario A n8n workflow's 'Render Block Kit' Code node assembles a final blocks[] array by selecting fragments from this file and substituting placeholders ({{...}}) with values from the digest_synthesis.md JSON output.",
+    "version": "1.0",
+    "last_updated": "2026-05-01",
+    "related_prompt": "prompts/digest_synthesis.md",
+    "playground_url": "https://app.slack.com/block-kit-builder",
+    "placeholder_syntax": "Mustache-style {{variable_name}}; replaced verbatim by the Code node. Unsubstituted placeholders trip the workflow's pre-post validation step."
+  },
+
+  "fragments": {
+    "header": [
+      {
+        "type": "header",
+        "text": { "type": "plain_text", "text": "🔍 Weekly Competitive Intel — week of {{week_of}}", "emoji": true }
+      },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "*{{competitors_monitored}}* competitors monitored  ·  *{{high_signal_count}}* HIGH  ·  *{{medium_signal_count}}* MEDIUM  ·  *{{low_signal_count}}* LOW" },
+          { "type": "mrkdwn", "text": "_Generated {{generated_at}} CET  ·  Run ID `{{run_id}}`_" }
+        ]
+      },
+      { "type": "divider" }
+    ],
+
+    "high_priority_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🔴 HIGH — {{competitor_name}}*  {{delta_badge}}\n{{bullets_md}}" }
+      },
+      {
+        "type": "actions",
+        "block_id": "actions_{{competitor_slug}}",
+        "elements": [
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "View full report" },
+            "value": "view::{{competitor_slug}}::{{run_id}}",
+            "action_id": "view_full_report",
+            "url": "{{notion_run_url}}"
+          },
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "Mark as read" },
+            "value": "ack::{{competitor_slug}}::{{run_id}}",
+            "action_id": "mark_as_read"
+          },
+          {
+            "type": "button",
+            "style": "danger",
+            "text": { "type": "plain_text", "text": "Flag" },
+            "value": "flag::{{competitor_slug}}::{{run_id}}",
+            "action_id": "flag_signal",
+            "confirm": {
+              "title": { "type": "plain_text", "text": "Flag this signal?" },
+              "text":  { "type": "plain_text", "text": "This will alert RevOps and pause auto-ingestion for {{competitor_name}}." },
+              "confirm": { "type": "plain_text", "text": "Flag" },
+              "deny": { "type": "plain_text", "text": "Cancel" }
+            }
+          }
+        ]
+      },
+      { "type": "divider" }
+    ],
+
+    "medium_priority_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🟡 MEDIUM — {{competitor_name}}*  {{delta_badge}}\n{{bullets_md}}" }
+      },
+      {
+        "type": "actions",
+        "block_id": "actions_{{competitor_slug}}",
+        "elements": [
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "View full report" },
+            "value": "view::{{competitor_slug}}::{{run_id}}",
+            "action_id": "view_full_report",
+            "url": "{{notion_run_url}}"
+          }
+        ]
+      },
+      { "type": "divider" }
+    ],
+
+    "low_priority_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🟢 LOW — {{low_competitor_names}}*\n_{{low_note}}_" }
+      },
+      { "type": "divider" }
+    ],
+
+    "high_priority_approval_card": [
+      {
+        "type": "header",
+        "text": { "type": "plain_text", "text": "🚦 Approval needed — HIGH signal: {{competitor_name}}", "emoji": true }
+      },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*Signal:* {{signal_headline}}\n*Source:* <{{source_url}}|{{source_type}}>\n*Confidence:* {{confidence}}%\n*Detected:* {{scraped_at}}" }
+      },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*Evidence (verbatim):*\n>{{evidence_quote}}" }
+      },
+      {
+        "type": "actions",
+        "block_id": "approval_{{signal_id}}",
+        "elements": [
+          {
+            "type": "button",
+            "style": "primary",
+            "text": { "type": "plain_text", "text": "✅ Approve & ingest" },
+            "value": "approve::{{signal_id}}::{{run_id}}",
+            "action_id": "approve_signal"
+          },
+          {
+            "type": "button",
+            "style": "danger",
+            "text": { "type": "plain_text", "text": "🚫 Flag — do not ingest" },
+            "value": "reject::{{signal_id}}::{{run_id}}",
+            "action_id": "reject_signal"
+          }
+        ]
+      },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "_HIGH signals require a human approval before they enter the knowledge base. Auto-skipped after 24h._" }
+        ]
+      }
+    ],
+
+    "data_quality_warnings_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": ":warning: *Data quality warnings*\n{{warnings_md}}" }
+      },
+      { "type": "divider" }
+    ],
+
+    "recommended_actions_section": [
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🎯 Recommended actions*\n{{actions_md}}" }
+      },
+      { "type": "divider" }
+    ],
+
+    "footer": [
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "💬 Ask anytime: `/intel <competitor> <timeframe>`  —  e.g. `/intel Pigment last 30 days`" },
+          { "type": "mrkdwn", "text": "Data confidence overall: *{{data_confidence}}%* {{confidence_emoji}}  ·  Cost this run: *${{run_cost_usd}}*  ·  <{{langfuse_run_url}}|Langfuse trace>" }
+        ]
+      }
+    ]
+  },
+
+  "render_rules": {
+    "delta_badge": {
+      "NEW": "`NEW this week`",
+      "ONGOING": "`ongoing from last week`"
+    },
+    "confidence_emoji_thresholds": {
+      ">=80": "✅",
+      ">=50": "⚠️",
+      "<50":  "🟥"
+    },
+    "bullets_md": "Each bullet is rendered as `• {bullet}` joined with `\\n`. Bullets longer than 180 chars are truncated with an ellipsis (validation rule in digest_synthesis.md).",
+    "warnings_md": "Each warning rendered as `• {warning}` joined with `\\n`. If `data_quality_warnings` is empty, this entire fragment is omitted.",
+    "actions_md": "Each action rendered as `• {action}` joined with `\\n`. Always present (digest_synthesis.md requires ≥1).",
+    "section_omission": "If high_priority array is empty, the whole high_priority block (including its divider) is omitted. Same for medium and low.",
+    "competitor_slug": "lowercase competitor_name with non-alphanumerics replaced by `-` (e.g. 'Pigment' → 'pigment')."
+  },
+
+  "complete_example": {
+    "_note": "What a fully-rendered digest looks like for the example in prompts/digest_synthesis.md. Paste this into https://app.slack.com/block-kit-builder to preview.",
+    "blocks": [
+      {
+        "type": "header",
+        "text": { "type": "plain_text", "text": "🔍 Weekly Competitive Intel — week of 2026-05-04", "emoji": true }
+      },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "*5* competitors monitored  ·  *1* HIGH  ·  *1* MEDIUM  ·  *2* LOW" },
+          { "type": "mrkdwn", "text": "_Generated 2026-05-04 08:02 CET  ·  Run ID `run_2026w18`_" }
+        ]
+      },
+      { "type": "divider" },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🔴 HIGH — Pigment*  `NEW this week`\n• New Starter tier launched at €299/mo, 3 users — first public SMB pricing.\n• 4 ML Engineer roles posted in Paris this week — signals continued AI investment.\n• Action: refresh Pigment pricing section in battlecard before any sub-100-employee deal call." }
+      },
+      {
+        "type": "actions",
+        "block_id": "actions_pigment",
+        "elements": [
+          { "type": "button", "text": { "type": "plain_text", "text": "View full report" }, "value": "view::pigment::run_2026w18", "action_id": "view_full_report", "url": "https://www.notion.so/competitive-intel/run_2026w18" },
+          { "type": "button", "text": { "type": "plain_text", "text": "Mark as read" }, "value": "ack::pigment::run_2026w18", "action_id": "mark_as_read" },
+          { "type": "button", "style": "danger", "text": { "type": "plain_text", "text": "Flag" }, "value": "flag::pigment::run_2026w18", "action_id": "flag_signal" }
+        ]
+      },
+      { "type": "divider" },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🟡 MEDIUM — Planful*  `NEW this week`\n• New blog: 'FP&A for PE Portfolio Companies' — direction-of-travel into PE vertical.\n• Not our primary ICP — informational only." }
+      },
+      { "type": "divider" },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🟢 LOW — Anaplan, Vena*\n_No significant signals this week._" }
+      },
+      { "type": "divider" },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": ":warning: *Data quality warnings*\n• ⚠️ Drivetrain pricing page returned 404 — competitor data unavailable this week. Will retry next run." }
+      },
+      { "type": "divider" },
+      {
+        "type": "section",
+        "text": { "type": "mrkdwn", "text": "*🎯 Recommended actions*\n• AEs in active Pigment evals: brief on the new Starter tier before next demo this week.\n• RevOps: log Pigment Starter pricing in the battlecard pricing intelligence section." }
+      },
+      { "type": "divider" },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "💬 Ask anytime: `/intel <competitor> <timeframe>`  —  e.g. `/intel Pigment last 30 days`" },
+          { "type": "mrkdwn", "text": "Data confidence overall: *87%* ✅  ·  Cost this run: *$0.062*  ·  <https://cloud.langfuse.com/project/abc/traces/xyz|Langfuse trace>" }
+        ]
+      }
+    ]
+  }
+}
