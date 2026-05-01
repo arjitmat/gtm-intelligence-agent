@@ -1,0 +1,53 @@
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+local.env
+*.pem
+*.key
+secrets/
+.secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Node / n8n
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.n8n/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / runtime
+*.log
+logs/
+tmp/
+.cache/
+
+# Data dumps (never commit raw scrape output)
+data/raw/
+data/scraped/
+*.sqlite
+*.db

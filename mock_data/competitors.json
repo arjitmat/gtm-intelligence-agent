@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0",
+  "last_updated": "2026-04-29",
+  "notes": "Realistic public profiles for the 5 FP&A competitors monitored by Scenario A. URLs are real production endpoints — Firecrawl will hit these in the demo. Source diversity is intentional: tests the system on dense data (Pigment, Anaplan) and sparse data (Drivetrain).",
+  "competitors": [
+    {
+      "name": "Pigment",
+      "tagline": "Business planning for the AI era.",
+      "founded": 2019,
+      "hq": "Paris, France",
+      "employees_estimate": 550,
+      "funding": {
+        "total_raised_usd": 393000000,
+        "last_round": "Series D",
+        "last_round_date": "2025-09-15",
+        "last_round_amount_usd": 145000000,
+        "lead_investors": ["ICONIQ Growth", "IVP", "Meritech Capital"]
+      },
+      "positioning": "Modern, collaborative FP&A platform with strong scenario planning and an aggressive AI roadmap. Pitches itself as 'Anaplan for the AI era'.",
+      "ideal_customer": "Series B+ tech companies, mid-market enterprises with finance teams of 5-50.",
+      "scrape_targets": {
+        "blog": "https://www.pigment.com/blog",
+        "changelog": "https://www.pigment.com/changelog",
+        "pricing": "https://www.pigment.com/pricing",
+        "careers": "https://www.pigment.com/careers",
+        "g2_url": "https://www.g2.com/products/pigment/reviews",
+        "linkedin": "https://www.linkedin.com/company/pigment-app/"
+      },
+      "data_density": "high",
+      "known_strengths": [
+        "Scenario modelling UX",
+        "Native multi-dimensional cube",
+        "Visualisations / dashboards",
+        "Recent AI assistant feature (2026)"
+      ],
+      "known_weaknesses": [
+        "Implementation still 6-10 weeks",
+        "Pricing opaque — gated quote process",
+        "Limited integrations outside core ERP set",
+        "Steep learning curve for non-finance users"
+      ],
+      "typical_deal_size_eur": "60000-250000 ARR",
+      "win_rate_vs_us": 0.42,
+      "demo_notes": "Use Pigment as the 'HIGH signal' competitor in the demo — they ship frequently and have lots of public data. Their pricing page is the cleanest delta-detection example."
+    },
+    {
+      "name": "Anaplan",
+      "tagline": "Connected planning for the enterprise.",
+      "founded": 2006,
+      "hq": "Miami, FL, USA (post-2022 Thoma Bravo take-private)",
+      "employees_estimate": 2400,
+      "funding": {
+        "total_raised_usd": 299700000,
+        "last_round": "Acquired by Thoma Bravo",
+        "last_round_date": "2022-06-21",
+        "last_round_amount_usd": 10700000000,
+        "lead_investors": ["Thoma Bravo (acquirer)"]
+      },
+      "positioning": "Enterprise-grade connected planning. Heavy in finance, supply chain, and workforce. Target buyer is the Fortune 1000 CFO.",
+      "ideal_customer": "Enterprises with >2000 employees and complex multi-entity planning.",
+      "scrape_targets": {
+        "blog": "https://www.anaplan.com/blog/",
+        "changelog": "https://help.anaplan.com/release-notes",
+        "pricing": "https://www.anaplan.com/pricing/",
+        "careers": "https://careers.anaplan.com/",
+        "g2_url": "https://www.g2.com/products/anaplan/reviews",
+        "linkedin": "https://www.linkedin.com/company/anaplan/"
+      },
+      "data_density": "high",
+      "known_strengths": [
+        "Massive enterprise install base",
+        "Powerful Hyperblock calculation engine",
+        "Workforce + supply chain modules beyond finance",
+        "Industry-specific accelerator templates"
+      ],
+      "known_weaknesses": [
+        "Reputationally slow innovation post-Thoma Bravo",
+        "Implementation 4-9 months — partner-led, expensive",
+        "User experience dated vs Pigment / us",
+        "License costs >€150k/yr typical entry point"
+      ],
+      "typical_deal_size_eur": "150000-1500000 ARR",
+      "win_rate_vs_us": 0.58,
+      "demo_notes": "Anaplan is the legacy giant we displace. The 'Mertonbridge Logistics' deal in the mock CRM is currently on Anaplan — perfect for showing how the system surfaces displacement context."
+    },
+    {
+      "name": "Planful",
+      "tagline": "The financial performance platform for mid-market.",
+      "founded": 2001,
+      "hq": "Redwood City, CA, USA",
+      "employees_estimate": 530,
+      "funding": {
+        "total_raised_usd": 207000000,
+        "last_round": "Acquired by Vector Capital",
+        "last_round_date": "2021-08-10",
+        "last_round_amount_usd": null,
+        "lead_investors": ["Vector Capital (acquirer)"]
+      },
+      "positioning": "Cloud FP&A for the mid-market. Originally Host Analytics. Strength in close + consolidation.",
+      "ideal_customer": "Mid-market US companies, 200-2000 employees, often in services or finance verticals.",
+      "scrape_targets": {
+        "blog": "https://planful.com/resources/blog/",
+        "changelog": "https://help.planful.com/whats-new",
+        "pricing": "https://planful.com/pricing/",
+        "careers": "https://planful.com/careers/",
+        "g2_url": "https://www.g2.com/products/planful/reviews",
+        "linkedin": "https://www.linkedin.com/company/planful/"
+      },
+      "data_density": "medium",
+      "known_strengths": [
+        "Close + consolidation depth (legacy of Host Analytics)",
+        "Solid US mid-market brand recognition",
+        "Vector Capital backing — financially stable"
+      ],
+      "known_weaknesses": [
+        "Slower product velocity vs Pigment / us",
+        "Weaker scenario modelling",
+        "EU presence thin — limited data residency options",
+        "UX feels 2018"
+      ],
+      "typical_deal_size_eur": "45000-180000 ARR",
+      "win_rate_vs_us": 0.61,
+      "demo_notes": "Planful blog occasionally publishes vertical expansion posts (e.g., PE portfolio) — good MEDIUM-tier delta example."
+    },
+    {
+      "name": "Drivetrain",
+      "tagline": "AI-native financial planning for high-growth companies.",
+      "founded": 2021,
+      "hq": "Palo Alto, CA, USA",
+      "employees_estimate": 95,
+      "funding": {
+        "total_raised_usd": 39000000,
+        "last_round": "Series A",
+        "last_round_date": "2024-03-12",
+        "last_round_amount_usd": 25000000,
+        "lead_investors": ["Foundation Capital", "Bain Capital Ventures"]
+      },
+      "positioning": "AI-first FP&A built for SaaS metrics. Targets Series A-C software companies who outgrew spreadsheets.",
+      "ideal_customer": "Series A-C SaaS, US-centric, 50-300 employees with one or two finance hires.",
+      "scrape_targets": {
+        "blog": "https://drivetrain.ai/blog/",
+        "changelog": null,
+        "pricing": null,
+        "careers": "https://drivetrain.ai/careers/",
+        "g2_url": "https://www.g2.com/products/drivetrain/reviews",
+        "linkedin": "https://www.linkedin.com/company/drivetrain-ai/"
+      },
+      "data_density": "low",
+      "known_strengths": [
+        "Modern UX, fast onboarding (often <2 weeks)",
+        "Pre-built SaaS metric library (ARR, NRR, magic number)",
+        "Direct integrations with Stripe, HubSpot, Salesforce"
+      ],
+      "known_weaknesses": [
+        "No public pricing — every quote bespoke",
+        "No public changelog — opacity on velocity",
+        "EU presence near-zero",
+        "Smaller team — perceived risk for enterprise buyers"
+      ],
+      "typical_deal_size_eur": "30000-90000 ARR",
+      "win_rate_vs_us": 0.35,
+      "demo_notes": "Drivetrain is the SPARSE-DATA edge case. No pricing page, no changelog. The system should yield LOW priority and a confidence score under 50 — demonstrate this honestly in the demo."
+    },
+    {
+      "name": "Vena",
+      "tagline": "Excel-powered FP&A on a modern cloud platform.",
+      "founded": 2011,
+      "hq": "Toronto, Canada",
+      "employees_estimate": 720,
+      "funding": {
+        "total_raised_usd": 366000000,
+        "last_round": "Growth Equity",
+        "last_round_date": "2024-11-04",
+        "last_round_amount_usd": 75000000,
+        "lead_investors": ["Vista Equity Partners", "JMI Equity"]
+      },
+      "positioning": "Excel-native FP&A. Pitches itself as 'don't change your finance team's habits, give them a better engine underneath'. Microsoft-aligned.",
+      "ideal_customer": "Mid-market US/UK/CA finance teams who live in Excel and don't want to migrate.",
+      "scrape_targets": {
+        "blog": "https://www.venasolutions.com/blog",
+        "changelog": "https://www.venasolutions.com/release-notes",
+        "pricing": "https://www.venasolutions.com/pricing",
+        "careers": "https://www.venasolutions.com/careers",
+        "g2_url": "https://www.g2.com/products/vena-solutions/reviews",
+        "linkedin": "https://www.linkedin.com/company/vena-solutions/"
+      },
+      "data_density": "medium",
+      "known_strengths": [
+        "Excel-native — zero retraining for finance team",
+        "Tight Microsoft 365 / Power BI integration",
+        "Strong North American mid-market presence"
+      ],
+      "known_weaknesses": [
+        "Excel-native is a ceiling — modelling complexity capped by Excel itself",
+        "Limited collaboration features vs Pigment / us",
+        "EU presence small",
+        "Clunky scenario comparison UX"
+      ],
+      "typical_deal_size_eur": "40000-150000 ARR",
+      "win_rate_vs_us": 0.55,
+      "demo_notes": "Vena's positioning is the 'different angle' — when a deal mentions strong Excel attachment (like Quizora Forms in mock CRM), Vena is the threat. Good test for nuanced competitive context."
+    }
+  ]
+}
