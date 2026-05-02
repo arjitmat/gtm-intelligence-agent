@@ -78,7 +78,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api-inference.huggingface.co/pipeline/feature-extraction/{{ $('Config').first().json.embedding_model || 'sentence-transformers/all-MiniLM-L6-v2' }}",
+        "url": "=https://router.huggingface.co/hf-inference/models/{{ $('Config').first().json.embedding_model || 'sentence-transformers/all-MiniLM-L6-v2' }}/pipeline/feature-extraction",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
