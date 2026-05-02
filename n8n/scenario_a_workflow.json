@@ -104,8 +104,8 @@
       "parameters": { "fieldToSplitOut": "competitors", "options": {} },
       "id": "44444444-4444-4444-4444-444444444444",
       "name": "Split competitors -> items",
-      "type": "n8n-nodes-base.itemLists",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
       "position": [500, 410]
     },
 
@@ -231,7 +231,7 @@
 
     {
       "parameters": {
-        "jsCode": "// DIAGNOSTIC v3 — halt to prove per-iteration chain reaches this node.\nthrow new Error('DIAG_CLEAN_TRUNCATE_REACHED competitor=' + ($('Loop over competitors').item?.json?.name ?? 'unknown') + ' inputs=' + $input.all().length);\n// Clean + truncate scraped content per source.\nconst MAX_CHARS = 2000;\nconst stripNoise = (s) => String(s || '')\n  .replace(/<\\/?[^>]+(>|$)/g, ' ')\n  .replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')\n  .replace(/!\\[[^\\]]*\\]\\([^)]+\\)/g, '')\n  .replace(/[\\u200B-\\u200D\\uFEFF]/g, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\nconst truncate = (s) => s.length > MAX_CHARS ? s.slice(0, MAX_CHARS) + '…' : s;\nconst extractFirecrawl = (resp) => {\n  if (!resp || resp.success === false) return { ok: false, text: '', error: resp?.error || 'no_response' };\n  const md = resp?.data?.markdown || resp?.markdown || resp?.data?.content || '';\n  if (!md) return { ok: false, text: '', error: 'empty_markdown' };\n  return { ok: true, text: truncate(stripNoise(md)) };\n};\nconst extractSupabaseBattlecard = (resp) => {\n  // Supabase REST returns an array of rows. PostgREST error shape: { code, message, ... }.\n  if (!resp) return { ok: false, text: '', error: 'no_response' };\n  if (!Array.isArray(resp)) return { ok: false, text: '', error: resp.message || 'supabase_error' };\n  const row = resp[0];\n  if (!row) return { ok: false, text: '', error: 'battlecard_not_found' };\n  const fields = [\n    ['Positioning',        row.positioning],\n    ['Strengths',          row.strengths],\n    ['Weaknesses',         row.weaknesses],\n    ['Objections',         row.objection_responses],\n    ['Win Stories',        row.win_stories],\n  ];\n  const flat = fields\n    .filter(([, v]) => v && String(v).trim())\n    .map(([label, v]) => `${label.toUpperCase()}: ${v}`)\n    .join('\\n\\n');\n  if (!flat) return { ok: false, text: '', error: 'battlecard_empty' };\n  return { ok: true, text: truncate(stripNoise(flat)) };\n};\nconst items = $input.all();\nconst competitor = $('Loop over competitors').item.json;\nconst runCfg = $('Set — Run config').first().json;\nconst blog = extractFirecrawl(items[0]?.json);\nconst pricing = extractFirecrawl(items[1]?.json);\nconst battlecard = extractSupabaseBattlecard(items[2]?.json);\nreturn [{ json: {\n  run_id: runCfg.run_id,\n  week_of: runCfg.week_of,\n  competitor_name: competitor.name,\n  competitor_slug: competitor.slug,\n  sources: {\n    blog:       { ok: blog.ok,       text: blog.text,       error: blog.error || null,       url: competitor.blog_url },\n    pricing:    { ok: pricing.ok,    text: pricing.text,    error: pricing.error || null,    url: competitor.pricing_url },\n    battlecard: { ok: battlecard.ok, text: battlecard.text, error: battlecard.error || null, url: null }\n  },\n  scrape_status: {\n    blog_ok: blog.ok, pricing_ok: pricing.ok, battlecard_ok: battlecard.ok,\n    any_failed: !blog.ok || !pricing.ok || !battlecard.ok\n  },\n  scraped_at: new Date().toISOString()\n} }];\n"
+        "jsCode": "// Clean + truncate scraped content per source.\nconst MAX_CHARS = 2000;\nconst stripNoise = (s) => String(s || '')\n  .replace(/<\\/?[^>]+(>|$)/g, ' ')\n  .replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')\n  .replace(/!\\[[^\\]]*\\]\\([^)]+\\)/g, '')\n  .replace(/[\\u200B-\\u200D\\uFEFF]/g, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\nconst truncate = (s) => s.length > MAX_CHARS ? s.slice(0, MAX_CHARS) + '…' : s;\nconst extractFirecrawl = (resp) => {\n  if (!resp || resp.success === false) return { ok: false, text: '', error: resp?.error || 'no_response' };\n  const md = resp?.data?.markdown || resp?.markdown || resp?.data?.content || '';\n  if (!md) return { ok: false, text: '', error: 'empty_markdown' };\n  return { ok: true, text: truncate(stripNoise(md)) };\n};\nconst extractSupabaseBattlecard = (resp) => {\n  // Supabase REST returns an array of rows. PostgREST error shape: { code, message, ... }.\n  if (!resp) return { ok: false, text: '', error: 'no_response' };\n  if (!Array.isArray(resp)) return { ok: false, text: '', error: resp.message || 'supabase_error' };\n  const row = resp[0];\n  if (!row) return { ok: false, text: '', error: 'battlecard_not_found' };\n  const fields = [\n    ['Positioning',        row.positioning],\n    ['Strengths',          row.strengths],\n    ['Weaknesses',         row.weaknesses],\n    ['Objections',         row.objection_responses],\n    ['Win Stories',        row.win_stories],\n  ];\n  const flat = fields\n    .filter(([, v]) => v && String(v).trim())\n    .map(([label, v]) => `${label.toUpperCase()}: ${v}`)\n    .join('\\n\\n');\n  if (!flat) return { ok: false, text: '', error: 'battlecard_empty' };\n  return { ok: true, text: truncate(stripNoise(flat)) };\n};\nconst items = $input.all();\nconst competitor = $('Loop over competitors').item.json;\nconst runCfg = $('Set — Run config').first().json;\nconst blog = extractFirecrawl(items[0]?.json);\nconst pricing = extractFirecrawl(items[1]?.json);\nconst battlecard = extractSupabaseBattlecard(items[2]?.json);\nreturn [{ json: {\n  run_id: runCfg.run_id,\n  week_of: runCfg.week_of,\n  competitor_name: competitor.name,\n  competitor_slug: competitor.slug,\n  sources: {\n    blog:       { ok: blog.ok,       text: blog.text,       error: blog.error || null,       url: competitor.blog_url },\n    pricing:    { ok: pricing.ok,    text: pricing.text,    error: pricing.error || null,    url: competitor.pricing_url },\n    battlecard: { ok: battlecard.ok, text: battlecard.text, error: battlecard.error || null, url: null }\n  },\n  scrape_status: {\n    blog_ok: blog.ok, pricing_ok: pricing.ok, battlecard_ok: battlecard.ok,\n    any_failed: !blog.ok || !pricing.ok || !battlecard.ok\n  },\n  scraped_at: new Date().toISOString()\n} }];\n"
       },
       "id": "77777777-7777-7777-7777-777777777777",
       "name": "Code — clean + truncate",
@@ -332,19 +332,19 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://httpstat.us/418",
+        "url": "={{ $('Config').first().json.supabase_url }}/rest/v1/competitor_signals",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Diagnostic-Marker", "value": "DIAG_2026_05_02_supabase_insert_reach_test" },
-            { "name": "X-Original-URL",      "value": "={{ $('Config').first().json.supabase_url }}/rest/v1/competitor_signals" },
-            { "name": "X-Competitor-Name",   "value": "={{ $json.competitor_name }}" },
-            { "name": "X-Priority-Tier",     "value": "={{ $json.priority_tier }}" }
+            { "name": "apikey", "value": "={{ $('Config').first().json.supabase_service_role_key }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $('Config').first().json.supabase_service_role_key }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"_diagnostic\": \"this URL replaced for one debug run\",\n  \"competitor_name\": \"{{ $json.competitor_name }}\",\n  \"priority_tier\": \"{{ $json.priority_tier }}\"\n}",
+        "jsonBody": "={\n  \"competitor_name\": \"{{ $json.competitor_name }}\",\n  \"signal_type\": \"{{ $json.signal_type }}\",\n  \"content_raw\": {{ JSON.stringify($json.content_raw || '') }},\n  \"content_summary\": {{ JSON.stringify($json.content_summary || null) }},\n  \"priority_tier\": \"{{ $json.priority_tier === 'UNKNOWN' ? 'LOW' : $json.priority_tier }}\",\n  \"confidence_score\": {{ $json.confidence_score }},\n  \"source_url\": {{ JSON.stringify($json.source_url) }},\n  \"scraped_at\": \"{{ $json.scraped_at }}\",\n  \"human_approved\": {{ $json.priority_tier === 'HIGH' ? 'false' : 'true' }},\n  \"run_id\": \"{{ $json.run_id }}\"\n}",
         "options": {
           "response": { "response": { "responseFormat": "json" } },
           "timeout": 15000
