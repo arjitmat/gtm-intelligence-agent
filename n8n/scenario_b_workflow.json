@@ -227,7 +227,7 @@
     },
 
     {
-      "parameters": { "mode": "combine", "combinationMode": "multiplex", "options": {} },
+      "parameters": { "mode": "append", "options": {} },
       "id": "b6666666-6666-6666-6666-666666666666",
       "name": "Merge — enrichment sources",
       "type": "n8n-nodes-base.merge",
