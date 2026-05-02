@@ -141,6 +141,37 @@ def resolve_base_url(cli_base: Optional[str]) -> Optional[str]:
     return base.rstrip("/") if base else None
 
 
+def resolve_airtable_record_ids(deal_ids: list[str]) -> dict[str, str]:
+    """Map DEAL-XXXX -> real Airtable record_id (recXXXX). Returns empty dict if
+    Airtable isn't configured or unreachable; callers should fall back gracefully."""
+    api_key = os.environ.get("AIRTABLE_API_KEY")
+    base = os.environ.get("AIRTABLE_BASE_ID")
+    table = os.environ.get("AIRTABLE_DEALS_TABLE", "Deals")
+    if not (api_key and base):
+        return {}
+    # filterByFormula: OR({Deal ID}='DEAL-0001', {Deal ID}='DEAL-0009', ...)
+    clauses = ",".join(f"{{Deal ID}}='{d}'" for d in deal_ids)
+    formula = f"OR({clauses})" if len(deal_ids) > 1 else clauses
+    try:
+        r = httpx.get(
+            f"https://api.airtable.com/v0/{base}/{table}",
+            params={"filterByFormula": formula, "maxRecords": 50},
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=15,
+        )
+        r.raise_for_status()
+    except httpx.HTTPError as e:
+        print(f"  warn: could not resolve Airtable record ids ({e}); using payload IDs as-is",
+              file=sys.stderr)
+        return {}
+    out: dict[str, str] = {}
+    for rec in r.json().get("records", []):
+        deal_id = rec.get("fields", {}).get("Deal ID")
+        if deal_id:
+            out[deal_id] = rec["id"]
+    return out
+
+
 def post_case(base: str, case: TestCase, *, timeout: float, dry_run: bool) -> dict:
     url = f"{base}{SCENARIO_B_PATH}"
     if dry_run:
@@ -213,6 +244,22 @@ def main() -> int:
         return 2
 
     targets = [c for c in CASES if not args.case or c.label.startswith(args.case)]
+
+    # Resolve real Airtable record_ids from Deal IDs so the workflow's
+    # 'Airtable — get deal record' GET hits the actual record. Without this,
+    # the test posts placeholder ids like recHEXALOGIC0001 that 404 against
+    # Airtable, and continueOnFail masks the failure.
+    if not args.dry_run:
+        deal_ids = [c.payload["deal_id"] for c in targets]
+        id_map = resolve_airtable_record_ids(deal_ids)
+        for c in targets:
+            real = id_map.get(c.payload["deal_id"])
+            if real:
+                c.payload["record_id"] = real
+            else:
+                print(f"  warn: no Airtable record found for {c.payload['deal_id']}; "
+                      f"keeping placeholder {c.payload['record_id']!r}", file=sys.stderr)
+
     print(f"Posting {len(targets)} case(s) to {base or '(dry-run)'}{SCENARIO_B_PATH}\n")
 
     overall_ok = True
