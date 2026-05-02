@@ -39,7 +39,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "scenario-a-trigger",
-        "options": { "responseMode": "lastNode" }
+        "responseMode": "lastNode",
+        "options": {}
       },
       "id": "22222222-2222-2222-2222-222222222222",
       "name": "Webhook — Manual demo trigger",

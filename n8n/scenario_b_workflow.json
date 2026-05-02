@@ -27,7 +27,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "scenario-b-deal",
-        "options": { "responseMode": "lastNode" }
+        "responseMode": "lastNode",
+        "options": {}
       },
       "id": "b1111111-1111-1111-1111-111111111111",
       "name": "Webhook — Airtable deal",
