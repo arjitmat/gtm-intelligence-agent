@@ -574,14 +574,7 @@
     "Merge — sources":       { "main": [[ { "node": "Code — clean + truncate", "type": "main", "index": 0 } ]] },
     "Code — clean + truncate": { "main": [[ { "node": "Claude Haiku — classify", "type": "main", "index": 0 } ]] },
     "Claude Haiku — classify": { "main": [[ { "node": "Code — parse + validate", "type": "main", "index": 0 } ]] },
-    "Code — parse + validate": { "main": [[ { "node": "IF — priority HIGH?", "type": "main", "index": 0 }, { "node": "Langfuse — log classify", "type": "main", "index": 0 } ]] },
-    "IF — priority HIGH?": {
-      "main": [
-        [ { "node": "Slack — HIGH approval card", "type": "main", "index": 0 } ],
-        [ { "node": "Supabase — insert signal", "type": "main", "index": 0 } ]
-      ]
-    },
-    "Slack — HIGH approval card": { "main": [[ { "node": "Supabase — insert signal", "type": "main", "index": 0 } ]] },
+    "Code — parse + validate": { "main": [[ { "node": "Supabase — insert signal", "type": "main", "index": 0 }, { "node": "Langfuse — log classify", "type": "main", "index": 0 } ]] },
     "Supabase — insert signal":   { "main": [[ { "node": "Loop over competitors", "type": "main", "index": 0 } ]] },
     "Aggregate — all competitors": { "main": [[ { "node": "Code — build digest input", "type": "main", "index": 0 } ]] },
     "Code — build digest input": { "main": [[ { "node": "Claude Sonnet — digest synth", "type": "main", "index": 0 } ]] },
