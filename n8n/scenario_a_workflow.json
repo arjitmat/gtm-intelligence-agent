@@ -38,7 +38,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "scenario-a-trigger",
+        "path": "scenario-a-v8",
         "responseMode": "lastNode",
         "options": {}
       },
@@ -47,7 +47,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [-160, 500],
-      "webhookId": "scenario-a-trigger"
+      "webhookId": "scenario-a-v8"
     },
 
     {
