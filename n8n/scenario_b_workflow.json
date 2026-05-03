@@ -207,7 +207,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"query_embedding\": {{ JSON.stringify(Array.isArray($json) && Array.isArray($json[0]) ? $json[0] : $json) }},\n  \"match_count\": 5,\n  \"competitor_filter\": null,\n  \"days_back\": 90\n}",
+        "jsonBody": "={\n  \"query_embedding\": {{ JSON.stringify((() => { const all = $input.all().map(x => x.json); if (all.length === 1 && Array.isArray(all[0]) && Array.isArray(all[0][0])) return all[0][0]; if (all.length === 1 && Array.isArray(all[0])) return all[0]; if (all.every(v => typeof v === 'number')) return all; return all[0]; })()) }},\n  \"match_count\": 5,\n  \"competitor_filter\": null,\n  \"days_back\": 90\n}",
         "options": {
           "response": { "response": { "neverError": true, "responseFormat": "json" } },
           "timeout": 15000

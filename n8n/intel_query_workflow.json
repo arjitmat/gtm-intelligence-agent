@@ -121,7 +121,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"query_embedding\": {{ JSON.stringify(Array.isArray($json) && Array.isArray($json[0]) ? $json[0] : $json) }},\n  \"match_count\": 8,\n  \"competitor_filter\": {{ JSON.stringify($('Code — parse query').first().json.competitor_filter) }},\n  \"days_back\": {{ $('Code — parse query').first().json.days_back }}\n}",
+        "jsonBody": "={\n  \"query_embedding\": {{ JSON.stringify((() => { const all = $input.all().map(x => x.json); if (all.length === 1 && Array.isArray(all[0]) && Array.isArray(all[0][0])) return all[0][0]; if (all.length === 1 && Array.isArray(all[0])) return all[0]; if (all.every(v => typeof v === 'number')) return all; return all[0]; })()) }},\n  \"match_count\": 8,\n  \"competitor_filter\": {{ JSON.stringify($('Code — parse query').first().json.competitor_filter) }},\n  \"days_back\": {{ $('Code — parse query').first().json.days_back }}\n}",
         "options": {
           "response": { "response": { "neverError": true, "responseFormat": "json" } },
           "timeout": 12000
