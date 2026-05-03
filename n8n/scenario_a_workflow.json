@@ -101,11 +101,13 @@
     },
 
     {
-      "parameters": { "fieldToSplitOut": "competitors", "options": {} },
+      "parameters": {
+        "jsCode": "// DIAGNOSTIC v12: explicit array split (replaces splitOut node which produced 0 items on n8n cloud).\nconst input = $input.first()?.json || {};\nconst arr = Array.isArray(input.competitors) ? input.competitors : [];\nconsole.log('=== DIAG v12 split competitors ===', JSON.stringify({ competitor_count: arr.length, first_competitor: arr[0] || null, input_keys: Object.keys(input) }, null, 2));\nif (arr.length === 0) {\n  throw new Error('DIAG_v12_NO_COMPETITORS — input.competitors is empty or missing. input keys: ' + JSON.stringify(Object.keys(input)));\n}\nreturn arr.map(c => ({ json: c }));"
+      },
       "id": "44444444-4444-4444-4444-444444444444",
       "name": "Split competitors -> items",
-      "type": "n8n-nodes-base.splitOut",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [500, 410]
     },
 
