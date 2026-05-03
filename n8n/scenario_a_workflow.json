@@ -38,7 +38,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "scenario-a-v8",
+        "path": "scenario-a-trigger",
         "responseMode": "lastNode",
         "options": {}
       },
@@ -47,7 +47,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [-160, 500],
-      "webhookId": "scenario-a-v8"
+      "webhookId": "scenario-a-trigger"
     },
 
     {
@@ -197,8 +197,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $('Config').first().json.supabase_anon_key }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $('Config').first().json.supabase_anon_key }}" },
+            { "name": "apikey",        "value": "={{ $('Config').first().json.supabase_service_role_key }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $('Config').first().json.supabase_service_role_key }}" },
             { "name": "Accept",        "value": "application/json" }
           ]
         },
@@ -346,7 +346,7 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"competitor_name\": \"{{ $json.competitor_name }}\",\n  \"signal_type\": \"{{ $json.signal_type }}\",\n  \"content_raw\": {{ JSON.stringify($json.content_raw || '') }},\n  \"content_summary\": {{ JSON.stringify($json.content_summary || null) }},\n  \"priority_tier\": \"{{ $json.priority_tier === 'UNKNOWN' ? 'LOW' : $json.priority_tier }}\",\n  \"confidence_score\": {{ $json.confidence_score }},\n  \"source_url\": {{ JSON.stringify($json.source_url) }},\n  \"scraped_at\": \"{{ $json.scraped_at }}\",\n  \"human_approved\": {{ $json.priority_tier === 'HIGH' ? 'false' : 'true' }},\n  \"run_id\": \"{{ $json.run_id }}\"\n}",
         "options": {
-          "response": { "response": { "responseFormat": "json" } },
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
           "timeout": 15000
         }
       },
@@ -355,8 +355,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [2580, 380],
+      "continueOnFail": true,
       "alwaysOutputData": true,
-      "retryOnFail": false
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
 
     {
@@ -574,7 +578,14 @@
     "Merge — sources":       { "main": [[ { "node": "Code — clean + truncate", "type": "main", "index": 0 } ]] },
     "Code — clean + truncate": { "main": [[ { "node": "Claude Haiku — classify", "type": "main", "index": 0 } ]] },
     "Claude Haiku — classify": { "main": [[ { "node": "Code — parse + validate", "type": "main", "index": 0 } ]] },
-    "Code — parse + validate": { "main": [[ { "node": "Supabase — insert signal", "type": "main", "index": 0 }, { "node": "Langfuse — log classify", "type": "main", "index": 0 } ]] },
+    "Code — parse + validate": { "main": [[ { "node": "IF — priority HIGH?", "type": "main", "index": 0 }, { "node": "Langfuse — log classify", "type": "main", "index": 0 } ]] },
+    "IF — priority HIGH?": {
+      "main": [
+        [ { "node": "Slack — HIGH approval card", "type": "main", "index": 0 } ],
+        [ { "node": "Supabase — insert signal", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Slack — HIGH approval card": { "main": [[ { "node": "Supabase — insert signal", "type": "main", "index": 0 } ]] },
     "Supabase — insert signal":   { "main": [[ { "node": "Loop over competitors", "type": "main", "index": 0 } ]] },
     "Aggregate — all competitors": { "main": [[ { "node": "Code — build digest input", "type": "main", "index": 0 } ]] },
     "Code — build digest input": { "main": [[ { "node": "Claude Sonnet — digest synth", "type": "main", "index": 0 } ]] },
