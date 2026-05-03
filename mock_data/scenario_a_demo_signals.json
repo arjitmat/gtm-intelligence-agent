@@ -1,0 +1,89 @@
+{
+  "_meta": {
+    "purpose": "Demo signals for Scenario A. Trigger the manual webhook with body { \"signals_override\": true } to use these instead of attempting a live Firecrawl scrape. Lets the digest synthesise from a representative weekly payload that matches MASTER §7's example tone, exactly the way the system would behave on a normal Monday in production.",
+    "consumed_by_node": "Code — build digest input",
+    "matches_block_kit_format_in": "MASTER.md §7 — Weekly Digest Format"
+  },
+  "competitors_monitored": ["Pigment", "Anaplan", "Planful", "Drivetrain", "Vena"],
+  "competitors_with_failed_scrapes": [],
+  "signals_this_week": [
+    {
+      "competitor_name": "Pigment",
+      "signal_type": "pricing",
+      "headline": "New SMB pricing tier launched at €299/month",
+      "evidence": "Pricing page now lists a 'Starter' tier at €299/mo for teams under 25 seats — confirmed via direct page diff vs. last week's snapshot. Pigment historically refused to publish SMB pricing.",
+      "signal_class": "pricing_change",
+      "priority_tier": "HIGH",
+      "confidence": 88,
+      "source_url": "https://www.pigment.com/pricing",
+      "scraped_at": "2026-05-03T08:00:00Z"
+    },
+    {
+      "competitor_name": "Pigment",
+      "signal_type": "job_posting",
+      "headline": "4 new ML Engineer hires on LinkedIn this week",
+      "evidence": "LinkedIn shows 4 ML Engineer hires Apr 28–May 2: 2 in Paris, 1 in NYC, 1 remote. Implies meaningful AI product investment alongside the SMB pricing move.",
+      "signal_class": "hire",
+      "priority_tier": "HIGH",
+      "confidence": 76,
+      "source_url": "https://www.linkedin.com/company/pigment/jobs/",
+      "scraped_at": "2026-05-03T08:00:00Z"
+    },
+    {
+      "competitor_name": "Anaplan",
+      "signal_type": "g2_review",
+      "headline": "3 new G2 reviews this week mention 'easier to implement than Anaplan'",
+      "evidence": "All 3 reviews are from Series B SaaS finance teams in our ICP (50–500 employees). Two reference 'Anaplan implementation took 9 months,' one references 'Anaplan consultants quoted €180k'. Sentiment continues to shift on time-to-value.",
+      "signal_class": "competitive_move",
+      "priority_tier": "MEDIUM",
+      "confidence": 71,
+      "source_url": "https://www.g2.com/products/anaplan/reviews",
+      "scraped_at": "2026-05-03T08:00:00Z"
+    },
+    {
+      "competitor_name": "Planful",
+      "signal_type": "blog",
+      "headline": "New blog: 'FP&A for PE Portfolio Companies'",
+      "evidence": "Planful publishing dedicated PE-vertical content for the second week running. Suggests a vertical pivot toward PE portfolio FP&A — outside our core mid-market SaaS ICP.",
+      "signal_class": "vertical_expansion",
+      "priority_tier": "LOW",
+      "confidence": 64,
+      "source_url": "https://planful.com/resources/blog/fpa-for-pe-portfolio-companies",
+      "scraped_at": "2026-05-03T08:00:00Z"
+    },
+    {
+      "competitor_name": "Drivetrain",
+      "signal_type": "blog",
+      "headline": "No significant signals this week",
+      "evidence": "Blog cadence steady, no pricing or product changelog updates, job postings flat. No detectable directional change.",
+      "signal_class": "other",
+      "priority_tier": "LOW",
+      "confidence": 50,
+      "source_url": "https://www.drivetrain.ai/blog",
+      "scraped_at": "2026-05-03T08:00:00Z"
+    },
+    {
+      "competitor_name": "Vena",
+      "signal_type": "feature",
+      "headline": "New webinar series: 'Excel + AI for mid-market CFOs'",
+      "evidence": "Featured webinar campaign positions Vena as the 'Excel-native AI' option vs. cloud-native AI competitors. Defensive framing — first time Vena explicitly addresses AI-native pressure.",
+      "signal_class": "competitive_move",
+      "priority_tier": "MEDIUM",
+      "confidence": 68,
+      "source_url": "https://www.venasolutions.com/blog/excel-ai-mid-market",
+      "scraped_at": "2026-05-03T08:00:00Z"
+    },
+    {
+      "competitor_name": "Vena",
+      "signal_type": "g2_review",
+      "headline": "1 G2 review mentions evaluating Vena alongside our product",
+      "evidence": "Series B HR SaaS reviewer (350 employees) listed Vena and us as final shortlist. Chose Vena on Microsoft 365 alignment. Worth a follow-up to understand the deciding factor.",
+      "signal_class": "competitive_move",
+      "priority_tier": "MEDIUM",
+      "confidence": 62,
+      "source_url": "https://www.g2.com/products/vena/reviews",
+      "scraped_at": "2026-05-03T08:00:00Z"
+    }
+  ],
+  "last_week_digest": null
+}
