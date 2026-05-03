@@ -571,7 +571,7 @@
     "Loop over competitors": {
       "main": [
         [ { "node": "Firecrawl — blog", "type": "main", "index": 0 }, { "node": "Firecrawl — pricing", "type": "main", "index": 0 }, { "node": "Supabase — battlecard", "type": "main", "index": 0 } ],
-        [ { "node": "Aggregate — all competitors", "type": "main", "index": 0 } ]
+        []
       ]
     },
     "Firecrawl — blog":      { "main": [[ { "node": "Merge — sources", "type": "main", "index": 0 } ]] },
@@ -588,7 +588,7 @@
       ]
     },
     "Slack — HIGH approval card": { "main": [[ { "node": "Supabase — insert signal", "type": "main", "index": 0 } ]] },
-    "Supabase — insert signal":   { "main": [[ { "node": "Loop over competitors", "type": "main", "index": 0 } ]] },
+    "Supabase — insert signal":   { "main": [[ { "node": "Loop over competitors", "type": "main", "index": 0 }, { "node": "Aggregate — all competitors", "type": "main", "index": 0 } ]] },
     "Aggregate — all competitors": { "main": [[ { "node": "Code — build digest input", "type": "main", "index": 0 } ]] },
     "Code — build digest input": { "main": [[ { "node": "Claude Sonnet — digest synth", "type": "main", "index": 0 } ]] },
     "Claude Sonnet — digest synth": { "main": [[ { "node": "Code — render Block Kit", "type": "main", "index": 0 }, { "node": "Langfuse — log synthesise", "type": "main", "index": 0 } ]] },
