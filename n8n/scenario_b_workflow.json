@@ -303,7 +303,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"fields\": {\n    \"Enrichment Status\": {{ JSON.stringify($json.enrichment.enrichment_status === 'complete' ? 'Complete' : ($json.enrichment.enrichment_status === 'partial' ? 'Partial' : 'Failed')) }},\n    \"ICP Score\": {{ $json.enrichment.icp_score }},\n    \"Last Enriched\": {{ JSON.stringify($json.enriched_at.slice(0,10)) }}\n  }\n}",
+        "jsonBody": "={\n  \"fields\": {\n    \"Enrichment Status\": {{ JSON.stringify(['Complete','Partial','Failed','Pending'].includes($json.enrichment.enrichment_status) ? $json.enrichment.enrichment_status : ($json.enrichment.enrichment_status === 'complete' ? 'Complete' : ($json.enrichment.enrichment_status === 'partial' ? 'Partial' : 'Failed'))) }},\n    \"ICP Score\": {{ $json.enrichment.icp_score }},\n    \"Last Enriched\": {{ JSON.stringify($json.enriched_at.slice(0,10)) }}\n  }\n}",
         "options": {
           "response": { "response": { "neverError": true, "responseFormat": "json" } },
           "timeout": 15000
