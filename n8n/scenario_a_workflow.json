@@ -350,7 +350,7 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"competitor_name\": \"{{ $json.competitor_name }}\",\n  \"signal_type\": \"{{ $json.signal_type }}\",\n  \"content_raw\": {{ JSON.stringify($json.content_raw || '') }},\n  \"content_summary\": {{ JSON.stringify($json.content_summary || null) }},\n  \"priority_tier\": \"{{ $json.priority_tier === 'UNKNOWN' ? 'LOW' : $json.priority_tier }}\",\n  \"confidence_score\": {{ $json.confidence_score }},\n  \"source_url\": {{ JSON.stringify($json.source_url) }},\n  \"scraped_at\": \"{{ $json.scraped_at }}\",\n  \"human_approved\": {{ $json.priority_tier === 'HIGH' ? 'false' : 'true' }},\n  \"run_id\": \"{{ $json.run_id }}\"\n}",
         "options": {
-          "response": { "response": { "responseFormat": "json" } },
+          "response": { "response": { "neverError": true, "responseFormat": "json" } },
           "timeout": 15000
         }
       },
@@ -359,8 +359,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [2580, 380],
+      "continueOnFail": true,
       "alwaysOutputData": true,
-      "retryOnFail": false
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
 
     {
