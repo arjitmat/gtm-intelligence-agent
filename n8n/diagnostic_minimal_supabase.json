@@ -1,0 +1,74 @@
+{
+  "_comment": "DIAGNOSTIC ONLY — minimal workflow to prove n8n cloud can write to Supabase competitor_signals. Webhook -> Supabase insert (hardcoded body) -> Respond. No loops, no LLM calls, no Slack. If POST returns 201 + a row appears in competitor_signals, n8n insert works. If not, the auth/URL/body in the Config node is the underlying issue.",
+  "name": "DIAGNOSTIC — Minimal Supabase Insert",
+  "meta": { "instanceId": "gtm-intel-agent" },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "diag-supabase",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "11111111-aaaa-1111-aaaa-111111111111",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "diag-supabase"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "d-url", "name": "supabase_url",              "type": "string", "value": "__SUPABASE_URL__" },
+            { "id": "d-key", "name": "supabase_service_role_key", "type": "string", "value": "__SUPABASE_SERVICE_ROLE_KEY__" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "22222222-aaaa-2222-aaaa-222222222222",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabase_url }}/rest/v1/competitor_signals",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $('Config').first().json.supabase_service_role_key }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $('Config').first().json.supabase_service_role_key }}" },
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Prefer",        "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"competitor_name\": \"Vena\",\n  \"signal_type\": \"blog\",\n  \"content_raw\": \"diagnostic: minimal n8n workflow probe\",\n  \"content_summary\": \"diagnostic minimal probe\",\n  \"priority_tier\": \"LOW\",\n  \"confidence_score\": 50,\n  \"source_url\": \"https://example.com/diag\",\n  \"scraped_at\": \"2026-05-03T00:00:00Z\",\n  \"human_approved\": true,\n  \"run_id\": \"diag_minimal_{{ $now.toMillis() }}\"\n}",
+        "options": {
+          "response": { "response": { "responseFormat": "json" } },
+          "timeout": 15000
+        }
+      },
+      "id": "33333333-aaaa-3333-aaaa-333333333333",
+      "name": "Supabase — insert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 300],
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Webhook":  { "main": [[ { "node": "Config", "type": "main", "index": 0 } ]] },
+    "Config":   { "main": [[ { "node": "Supabase — insert", "type": "main", "index": 0 } ]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "diag-1",
+  "id": "DIAGNOSTIC_MINIMAL_SUPABASE",
+  "tags": []
+}
