@@ -36,9 +36,17 @@ Both share the same Supabase pgvector knowledge base. Scrape once, serve everywh
 │       ├── drivetrain.md
 │       └── vena.md
 ├── scripts/
-│   ├── seed_supabase.py           # embeds battlecards via HF + upserts to Supabase
+│   ├── seed_supabase.py            # embeds battlecards via HF + upserts to Supabase
+│   ├── seed_competitor_signals.py  # back-fills competitor_signals from demo signals
+│   ├── seed_airtable.py            # creates Deals table + bulk-upserts 12 mock records
+│   ├── test_scenario_b.py          # posts 3 deal payloads (Green/Amber/Red) to Scenario B
+│   ├── edge_cases.py               # graceful-degradation test harness
+│   ├── audit_data_quality.py       # read-only pre-demo verification (Airtable + Supabase + mock_data)
 │   └── requirements.txt
-└── n8n/                            # exported workflows land here in Session 3+
+└── n8n/
+    ├── scenario_a_workflow.json    # weekly digest (Cron + manual demo trigger)
+    ├── scenario_b_workflow.json    # deal enrichment (webhook from Airtable)
+    └── intel_query_workflow.json   # /intel Slack slash-command RAG handler
 ```
 
 ---
@@ -141,7 +149,16 @@ All LLM calls instrumented in Langfuse for live cost tracking.
 |---|---|---|
 | 1 | Folder structure, `.env.example`, Supabase schema, mock CRM, competitor profiles | ✅ |
 | 2 | Battlecards × 5, prompt files × 3, `seed_supabase.py` | ✅ |
-| 3+ | n8n workflows, Firecrawl integration, Slack Block Kit, RAG, Gradio, Langfuse | ⏳ |
+| 3 | Scenario A weekly digest workflow (n8n + Firecrawl + Haiku classify + Sonnet synth + Slack Block Kit) | ✅ |
+| 4 | Scenario B deal enrichment workflow (Airtable webhook + Hunter.io + Sonnet enrich + Airtable PATCH + Slack) | ✅ |
+| 5 | `/intel` Slack slash-command RAG (HF embed → pgvector RPC → Sonnet grounded answer) | ✅ |
+| 6 | Langfuse traces on every LLM call · Audit + edge-case test harnesses | ✅ |
+
+### Known limitations
+
+- **Scenario A live multi-competitor scrape is constrained on n8n Cloud free tier.** The `SplitInBatches v3` node's lane 0 doesn't reliably fire downstream on the free plan, so the per-competitor live-scrape loop only completes for a single competitor at a time. **Workaround for the demo:** trigger the manual webhook with `{"signals_override": true}` to use `mock_data/scenario_a_demo_signals.json` as the synthesis input — produces a representative weekly-format digest deterministically. Production deployment on the paid tier removes this constraint.
+- **`/intel` slash command requires the Slack app to register `/intel` pointing at `{n8n_base}/webhook/intel`** (Slash Commands → Create New Command in your Slack app config). Bot needs `commands` scope and the channel needs `/invite @GTM Intel Bot`.
+- **`deal_enrichments` and `digest_runs` Supabase tables are schema-only** — Scenario B currently writes enrichment back to Airtable (the source-of-truth CRM); the Supabase tables are forward-compatible for snapshot history but not yet wired up.
 
 ---
 
