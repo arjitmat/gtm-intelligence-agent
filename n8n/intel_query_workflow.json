@@ -30,7 +30,7 @@
         "responseMode": "onReceived",
         "responseData": "noData",
         "responseCode": 200,
-        "options": { "rawBody": false }
+        "options": { "rawBody": false, "noResponseBody": true }
       },
       "id": "i1111111-1111-1111-1111-111111111111",
       "name": "Webhook — /intel",
