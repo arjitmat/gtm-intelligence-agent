@@ -32,7 +32,7 @@ A **Unified Competitive Intelligence System** for a B2B SaaS company selling a f
 | Mock CRM | Airtable | Professional REST API, realistic schema, likely what Abacum uses | Google Sheet (acceptable but less realistic) |
 | Web scraping | Firecrawl | Returns clean markdown, removes HTML noise before LLM call, free tier 500 pages/month | BeautifulSoup (requires Python service), Apify (paid) |
 | Slack output | Slack Block Kit | Rich formatted messages with buttons, no images needed, native to Slack | Plain text (too noisy), Canvas (overkill) |
-| Query interface | HuggingFace Gradio | Accessible to reviewers with no setup, free hosting | Localhost (fragile for demo), FastAPI (requires deployment) |
+| Query interface | Slack `/intel` slash command | Native to where GTM teams already live; same Block Kit surface as the digest; no second app for users to learn | HuggingFace Gradio (rejected — adds a separate UI/auth surface for the same RAG endpoint that `/intel` already serves) |
 | Observability | Langfuse | LLM call logging, cost tracking, prompt version management, free tier | OpenTelemetry (more complex), none (not production-grade) |
 | Company data | Clearbit free tier | 500 requests/month, company overview, tech stack, headcount | Apollo (more expensive), ZoomInfo (too expensive) |
 | Funding data | Crunchbase basic API | Free for basic funding rounds | Manual mock data |
@@ -498,9 +498,9 @@ Fine-tuned embeddings for FP&A domain. LinkedIn Sales Navigator integration for 
 - [ ] Airtable base shared (view-only link)
 - [ ] Notion workspace shared (view-only link, battlecards visible)
 - [ ] Supabase schema documented
-- [ ] HuggingFace Gradio query interface live
+- [ ] Slack `/intel` slash command live (RAG over the knowledge layer — replaces the originally-planned standalone Gradio UI)
 - [ ] Langfuse project shared (view-only)
-- [ ] Demo recording (3-7 min, shows both scenarios + 1 edge case + query)
+- [ ] Demo recording (3-7 min, shows both scenarios + 1 edge case + `/intel` query)
 - [ ] MASTER.md included in submission (shows architectural thinking)
 
 ---
@@ -518,8 +518,7 @@ Fine-tuned embeddings for FP&A domain. LinkedIn Sales Navigator integration for 
 9. **n8n Scenario B** — Airtable webhook → enrichment → write back → Slack
 10. **RAG query** — `/intel` command → Supabase similarity search → Sonnet answer → Slack reply
 11. **Error handling** — add to every HTTP node and LLM call
-12. **HuggingFace Gradio** — simple query interface wrapping RAG endpoint
-13. **Langfuse** — instrument all LLM calls
-14. **Edge case testing** — trigger all 7 edge cases, verify handling
-15. **Demo recording** — follow demo script
-16. **README + export** — clean submission
+12. **Langfuse** — instrument all LLM calls
+13. **Edge case testing** — trigger all 7 edge cases, verify handling
+14. **Demo recording** — follow demo script
+15. **README + export** — clean submission

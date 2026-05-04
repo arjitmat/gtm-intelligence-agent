@@ -7,8 +7,7 @@ Total budget: **6:00**. Hard cap. If anything fails live, fall back to recording
 - [ ] Slack workspace open in browser, `#competitive-intel` and `#deals` both visible
 - [ ] n8n editor open in second tab — both workflows imported, Config nodes filled
 - [ ] Airtable base open in third tab — DEAL-EDGE-001 in `Discovery` stage (you'll move it to Qualified live)
-- [ ] HuggingFace Space (Gradio) open in fourth tab, "Ask Competitive Intel" tab active
-- [ ] Langfuse dashboard open in fifth tab, filter set to "today"
+- [ ] Langfuse dashboard open in fourth tab, filter set to "today"
 - [ ] Slide 1 (the architecture diagram) ready to flip to during 4:30–5:30
 - [ ] One sentence written on a sticky note: *"One knowledge layer, two interfaces."* — that's the spine.
 
@@ -88,14 +87,14 @@ Hover over Slack `#competitive-intel` channel — show last week's digest alread
 
 ### **4:00 — 4:30  ·  Query the system**
 
-**Tab:** flip to **HuggingFace Space (Gradio)**.
+**Tab:** stay in Slack, `#competitive-intel`.
 
-1. In the search box, type: `What has Pigment shipped in last 30 days?`
-2. Hit Ask. Answer renders in ~3-4 seconds with source attribution and last-updated timestamp.
+1. In the message box, type: `/intel Pigment last 30 days` and send.
+2. Slash command echoes; ~3-6 seconds later the bot posts a synthesised answer with source attribution and a Top sources line linking back to the actual scraped pages.
 
-> "Same knowledge base. Different surface. The `/intel` Slack slash command is wired to the same RPC — same answer in 4 seconds without leaving Slack. Both backed by an empty-result guard: ask about a competitor we don't track, you get *No intelligence found* — never a hallucination."
+> "Same knowledge base, queried from where the GTM team already lives — no second app, no second login. The `/intel` slash command hits the same Supabase RPC the Monday digest writes to. Backed by an empty-result guard: ask about a competitor we don't track, you get *No intelligence found* — never a hallucination."
 
-(Optional, if time allows ~10s spare: type `What has FakeCompanyZZZ done?` and show the empty-result short-circuit.)
+(Optional, if time allows ~10s spare: type `/intel FakeCompanyZZZ` and show the empty-result short-circuit.)
 
 ---
 
@@ -140,4 +139,4 @@ Three items, eight seconds each:
 - **Don't read the digest aloud.** Show it, point at it, move on. Reviewers can read.
 - **Don't open the JSON.** Workflow JSON is for the repo, not the demo.
 - **Don't apologise for sparse data on Drivetrain.** It's the deliberate sparse-data edge case — frame it as a feature, not a bug.
-- **Don't run over.** If you're at 5:55 and still on Scenario B, skip the Gradio demo and go straight to architecture. The architecture is the differentiator.
+- **Don't run over.** If you're at 5:55 and still on Scenario B, skip the `/intel` demo and go straight to architecture. The architecture is the differentiator.
