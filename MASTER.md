@@ -1,4 +1,4 @@
-# ABACUM CASE STUDY — MASTER CONTEXT FILE
+# COMPETITIVE-INTEL CASE STUDY — MASTER CONTEXT FILE
 > Version: 1.0 | Last updated: 29 April 2026
 > This file is the single source of truth for all Claude Code sessions.
 > Read this before writing any code. Update this file as decisions change.
@@ -29,7 +29,7 @@ A **Unified Competitive Intelligence System** for a B2B SaaS company selling a f
 | LLM (synthesis) | Claude Sonnet | Quality critical tasks: digest, battlecard, query answers | GPT-4o — viable fallback |
 | Model abstraction | Wrapper function | LLM-agnostic: model is a parameter, not hardcoded | Hardcoded strings — rejected: fails live "what if we use OpenAI?" question |
 | Vector store | Supabase pgvector | Matches brief's Postgres reference, hosted, free tier, production-realistic | Pinecone (managed but overkill), LanceDB (local only), Zeppelin (experimental, <20 stars) |
-| Mock CRM | Airtable | Professional REST API, realistic schema, likely what Abacum uses | Google Sheet (acceptable but less realistic) |
+| Mock CRM | Airtable | Professional REST API, realistic schema, what most B2B SaaS finance teams use | Google Sheet (acceptable but less realistic) |
 | Web scraping | Firecrawl | Returns clean markdown, removes HTML noise before LLM call, free tier 500 pages/month | BeautifulSoup (requires Python service), Apify (paid) |
 | Slack output | Slack Block Kit | Rich formatted messages with buttons, no images needed, native to Slack | Plain text (too noisy), Canvas (overkill) |
 | Query interface | Slack `/intel` slash command | Native to where GTM teams already live; same Block Kit surface as the digest; no second app for users to learn | HuggingFace Gradio (rejected — adds a separate UI/auth surface for the same RAG endpoint that `/intel` already serves) |
